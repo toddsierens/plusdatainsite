@@ -161,6 +161,7 @@ def reset_game():
     global game
     game.kill()
     game = Engine()
+    game.start()
     
 @app.route('/')
 def index():
@@ -176,6 +177,7 @@ def phrases():
     if not phrases_discovered:
         with app.app_context():
             socketio.emit("logging", "phrases page discovered!", broadcast = True)
+        print "phrases page discovered!"
         phrases_discovered = True
     # just a simple Caesar cipher
     soccer = "".join(map(lambda x: ENCODING.get(x,x),CRYPTO_SOCCER))
@@ -195,6 +197,7 @@ def rosetta():
     if not rosetta_discovered:
         with app.app_context():
             socketio.emit("logging", "rosetta page discovered!", broadcast = True)
+        print "rosetta page discovered!"
         rosetta_discovered = True
             
     cipher = request.args.get("cipher")
@@ -205,6 +208,7 @@ def rosetta():
         if not cipher_discovered:
             with app.app_context():
                 socketio.emit("logging", "cipher tool discovered!", broadcast = True)
+            print "cipher tool discovered!"
             cipher_discovered = True
         secret = """
             <form id = "cipherForm">
@@ -284,17 +288,20 @@ def io_logic_solution(message):
     name = submitted_solution.pop("name", "?????")
     last_submission = time()
     if answered_logic_correctly or submitted_solution == actual_solution:
-        answered_logic_correctly = True
+        
         emit(
             "solution", 
              """Correct!!! Move on to <a href = "/phrases">/phrases</a>""",
              broadcast = True
         )
-        emit(
-            "logging", 
-             """Logic question answered correctly by {}""".format(name),
-             broadcast = True
-        )
+        if not answer_logic_correctly:
+            emit(
+                "logging", 
+                 """Logic question answered correctly by {}""".format(name),
+                 broadcast = True
+            )
+            print """Logic question answered correctly by {}""".format(name)
+        answered_logic_correctly = True
     else:
         incorrect_answers += 1
         current_delay += 5
@@ -309,6 +316,7 @@ def io_logic_solution(message):
              """Logic question answered incorrectly by {}""".format(name),
              broadcast = True
         )
+        print """Logic question answered incorrectly by {}""".format(name)
 
 @socketio.on('logic_name')
 def io_logic_name(message):
@@ -338,6 +346,7 @@ def io_logic_name(message):
     if name in clues:
         emit("clue", clues[name])
         emit("logging", "{} received their clue".format(name), broadcast = True)
+        print "{} received their clue".format(name)
     else:
         emit("clue", "Name unknown, make sure to use your first name as labelled in Slack")
     print name
@@ -350,15 +359,19 @@ def io_crypto_solution(message):
     if response == CRYPTO_SOCCER.split("|")[0].strip():
         emit("response", SLACK_CHANNEL, broadcast = True)
         emit("logging", "Soccer clue decoded by {}".format(name), broadcast = True)
+        print "Soccer clue decoded by {}".format(name)
     elif response == CRYPTO_RUSSIA.split("|")[0].strip():
         emit("response", GOOGLE_HANGOUTS, broadcast = True)
         emit("logging", "Can-of-worms clue decoded by {}".format(name), broadcast = True)
+        print "Can-of-worms clue decoded by {}".format(name)
     elif response == CRYPTO_GEEKBOT.split("|")[0].strip():
         emit("response", HIVE_SCRATCH, broadcast = True)
-        emit("logging", "geekbot clue decoded by {}".format(name), broadcast = True)
+        emit("logging", "Geekbot clue decoded by {}".format(name), broadcast = True)
+        print "Geekbot clue decoded by {}".format(name)
     else:
         emit("response", "That is not a correct answer")
         emit("logging", "Incorrect phrase submitted by {}".format(name), broadcast = True)
+        print "Incorrect phrase submitted by {}".format(name)
         
 @socketio.on('connect')
 def io_connect():
@@ -371,6 +384,7 @@ def io_connect():
 @socketio.on('broadcast')
 def io_broadcast(message):
     emit('broadcast', message, broadcast=True)
+    
     
 @socketio.on('connect_river')
 def io_connect_river(name):
@@ -394,6 +408,7 @@ def io_connect_river(name):
         "{} arrived at the river!".format(name if name.lower() != "admin" else "Todd"),
         broadcast = True
     )
+    print "{} arrived at the river!".format(name if name.lower() != "admin" else "Todd")
     number_of_players += 1
 
 @socketio.on('player_update')
@@ -406,15 +421,17 @@ def io_player_update(message):
     player.up = message["w"]
     player.down = message["s"]
     player.name = message["name"]
+    
+@socketio.on('reset_engine')
+def io_reset_engine():
+    print "game reset"
+    reset_game()
 
 @socketio.on('disconnect')
 def io_disconnect():
     if request.sid in client_id_map:
         game.players.pop(client_id_map[request.sid], None)
     print('Client disconnected')
-    
-
-    
     
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
