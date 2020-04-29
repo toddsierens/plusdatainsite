@@ -54,8 +54,13 @@
                     window.localStorage.setItem('name', $('#name').val());
                     return false //important so the page won't refresh
                 }
+                function resetEngine(){
+                    socket.emit('reset_engine')
+                    return false
+                }
                 window.sendBroadcast = sendBroadcast
                 window.sendName = sendName
+                window.resetEngine = resetEngine
                 $('#broadcast').submit(function() {
                     sendBroadcast()
                     return false;
@@ -86,6 +91,14 @@
                      <label>Name</label>
                      <input id="name" type="text" name="name" value="Admin">
                      <button type="button" onclick = "sendName()">Submit</button>
+                     <div id=clue></div>
+                </fieldset>
+            </form>
+            <form id = "resetEngine">
+                 <fieldset>
+                     <legend>Reset River</legend>
+                     <label>Engine Reset</label>
+                     <button type="button" onclick = "resetEngine()">Reset</button>
                      <div id=clue></div>
                 </fieldset>
             </form>

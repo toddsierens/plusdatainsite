@@ -372,16 +372,12 @@ def io_connect():
 def io_broadcast(message):
     emit('broadcast', message, broadcast=True)
     
-@socketio.on('connect')
-def io_connect():
-    global number_of_clients
-    number_of_clients += 1
-    print "client {} connected".format(number_of_clients)
-    
 @socketio.on('connect_river')
 def io_connect_river(name):
     global number_of_players
     new_player = Player(number_of_players)
+    if name.lower() == "admin":
+        new_player.x = WIDTH * 0.05
     client_id_map[request.sid] = number_of_players
     #remove duplicate players
     to_remove = []
