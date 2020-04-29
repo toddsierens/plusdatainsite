@@ -1,0 +1,230 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Plus Data Insite</title>
+        <style>
+            canvas {
+                padding: 0;
+                margin: auto;
+                display: block;
+                width: 1920;
+                height: 1080;
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }
+      
+        </style>
+        
+        <script src="//code.jquery.com/jquery-1.12.4.min.js"> </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"> </script>
+        <script>
+            var name = localStorage.getItem("name")
+            var WIDTH = 1920
+            var HEIGHT = 1280
+            var SMOOTHING = 0.3
+            var SELF_SMOOTHING = 0.1
+            var ADMIN = "admin"
+            class Player{
+                constructor(id){
+                    this.x = WIDTH * 0.9
+                    this.y = HEIGHT * 0.5
+                    this.id = id
+                    this.name = name
+                }
+                update_position(new_x, new_y, smoothing){
+                    this.x += (new_x - this.x) * smoothing
+                    this.y += (new_y - this.y) * smoothing
+                }
+                update_other_position(new_x, new_y){
+                    this.update_position(new_x, new_y, SMOOTHING)
+                }
+                update_own_position(new_x, new_y){
+                    this.update_position(new_x, new_y, SELF_SMOOTHING)
+                }
+                set_position(new_x, new_y){
+                    this.x = new_x
+                    this.y = new_y
+                }
+                update_name(new_name){
+                    this.name = new_name
+                }
+            }
+            player = null
+            player_list = {}
+            keyA = false
+            keyS = false
+            keyD = false
+            keyW = false
+            
+            function onKeyDown(event) {
+                var keyCode = event.keyCode;
+                switch (keyCode) {
+                    case 68: //d
+                        keyD = true;
+                        break;
+                    case 83: //s
+                        keyS = true;
+                        break;
+                    case 65: //a
+                        keyA = true;
+                        break;
+                    case 87: //w
+                        keyW = true;
+                        break;
+              }
+            }
+            
+            function onKeyUp(event) {
+                var keyCode = event.keyCode;
+                switch (keyCode) {
+                    case 68: //d
+                        keyD = false;
+                        break;
+                    case 83: //s
+                        keyS = false;
+                        break;
+                    case 65: //a
+                        keyA = false;
+                        break;
+                    case 87: //w
+                        keyW = false;
+                        break;
+              }
+            }
+            
+            
+            
+            function draw_frame(){
+                canvas_jquery = $('#canvas')
+                canvas_jquery.width(0.9*window.innerWidth)
+                canvas_jquery.height(canvas_jquery.width() * 1080 / 1920)
+                context.fillStyle = "#95BF47"
+                context.fillRect(0,0,1920,1080)
+                context.fillStyle = "#74ccf4"
+                context.fillRect(200,0,1520,1080)
+                for (var i = 0; i < Object.values(player_list).length; i++){
+                    player_to_draw = Object.values(player_list)[i]
+                    context.strokeStyle = '#003300'
+                    context.lineWidth = 3
+                    if (player_to_draw["name"].toLowerCase() === ADMIN){
+                        context.fillStyle = "red"
+                    } else if (player_to_draw["name"].toLowerCase() === player["name"].toLowerCase()){
+                        context.fillStyle = 'black'
+                    } else {
+                        context.fillStyle = 'green'
+                    }
+                    context.beginPath()
+                    context.arc(player_to_draw["x"], player_to_draw["y"], 50, 0, 2 * Math.PI, false)
+                    context.fill()
+                    context.stroke()
+                    context.fillStyle = '#003300'
+                    context.textAlign = "center";
+                    context.font = "45px Arial";
+                    if (player_to_draw["name"].toLowerCase() === ADMIN){
+                        context.fillText("Todd", player_to_draw["x"], player_to_draw["y"] - 75)
+                        if (flash_on){
+                            context.fillText("help", player_to_draw["x"]+150, player_to_draw["y"] - 150)
+                            context.beginPath()
+                            context.moveTo(player_to_draw["x"]+50, player_to_draw["y"] - 50)
+                            context.lineTo(player_to_draw["x"]+125, player_to_draw["y"] - 125)
+                            context.stroke();
+                        }
+                    } else {
+                        context.fillText(player_to_draw["name"], player_to_draw["x"], player_to_draw["y"] - 75)
+                    }
+                    
+                }
+            }
+            
+            flash_on = true; // variable that keeps track of blinking text
+            setInterval(function(){flash_on ^= true}, 1000)
+            
+            
+            
+            $(document).ready(function(){
+                var socket = io();
+                socket.on('connect', function() {
+                    console.log('connected')
+                    socket.emit('connect_river', name)
+                });
+                
+                socket.on('broadcast', function(event){
+                    console.log('broadcast')
+                    $('#broadcast').html('<h2>' + event + '</h2>')
+                })
+                
+                socket.on('assign_id', function(event){
+                    console.log("id assigned "+event)
+                    window.player = new Player(event)
+                    window.player_list[event] = window.player
+                })
+                
+                socket.on('update', function(update){
+                    if (player === null){
+                        return
+                    }
+                    list_of_connected_players = []
+                    for (var i = 0; i < update.length; i++){
+                        id = update[i]["id"]
+                        list_of_connected_players.push(id)
+                        x = update[i]["x"]
+                        y = update[i]["y"]
+                        new_name = update[i]["name"]
+                        if (player["id"] == id){
+                            player.update_own_position(x,y)
+                        } else if (id in player_list){
+                            player_list[id].update_other_position(x,y)
+                            player_list[id].name = new_name
+                        } else {
+                            player_list[id] = new Player(id)
+                            player_list[id].set_position(x,y)
+                        }
+                    }
+                    for (var i = 0; i < Object.values(player_list).length; i++){
+                        id = Object.values(player_list)[i]["id"]
+                        if (list_of_connected_players.indexOf(id) < 0){
+                            console.log(id + " disconnected")
+                            delete player_list[id]
+                        }
+                    }
+                    
+                })
+                window.addEventListener("keydown", onKeyDown, false);
+                window.addEventListener("keyup", onKeyUp, false);
+                
+                function gameLoop(){
+//                     window.requestAnimationFrame(draw_frame);
+                    draw_frame()
+                    new_x = player["x"] + 10 * (keyD - keyA)
+                    new_y = player["y"] + 10 * (keyS - keyW)
+                    player.set_position(new_x, new_y)
+                    socket.emit(
+                        'player_update',
+                        {
+                            "id": player["id"],
+                            "a":  keyA,
+                            "s":  keyS,
+                            "d":  keyD,
+                            "w":  keyW,
+                            "name": name
+                        }
+                    )
+                }
+                window.setInterval(gameLoop, 1000/60)
+//                 window.setInterval(gameLoop, 1000)
+                window.canvas = document.getElementById('canvas')
+                window.context = window.canvas.getContext('2d')
+            })
+            
+            
+            
+        </script>
+    </head>
+    <body>
+        <canvas id="canvas" height = 1080 width = 1920></canvas>
+        <div id = broadcast></div>
+    </body>
+</html>

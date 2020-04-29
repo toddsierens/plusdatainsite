@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Plus Data Insite</title>
+        <script src="//code.jquery.com/jquery-1.12.4.min.js"> </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"> </script>
+        <script>
+            $(document).ready(function(){
+                var socket = io();
+                socket.on('connect', function() {
+                    console.log('connected')
+                    socket.emit('new_connection', {data: 'I\'m connected!'});
+                });
+                socket.on('my response', function(event){
+                    console.log('got message from server')
+                    $('#server_message').html('<h1>' + event + '</h1>')
+                })
+            })
+        </script>
+    </head>
+    <body>
+        <div id = server_message><h1>Hello, World!</h1></div>
+    </body>
+</html>

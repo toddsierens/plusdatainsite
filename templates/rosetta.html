@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <style>
+            input, select, textarea, label, button, legend {
+                font-size: 16pt;
+            }
+            h1,h2,h3 {
+                font-size: 250%;
+            }
+        </style>
+        <title>Plus Data Insite</title>
+        <script src="//code.jquery.com/jquery-1.12.4.min.js"> </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"> </script>
+        <script>
+            $(document).ready(function(){
+                var socket = io();
+                socket.on('connect', function() {
+                    console.log('connected')
+                    socket.emit('new_connection', {data: 'I\'m connected!'});
+                });
+                socket.on('secret', function(event){
+                    console.log('response')
+                    $('#secret').html(event)
+                })
+                socket.on('broadcast', function(event){
+                    console.log('broadcast')
+                    $('#broadcast').html('<h2>' + event + '</h2>')
+                })
+            })
+            
+            
+        </script>
+    </head>
+    <body>
+        <div id = static style="display:none;">{{message}}</div>
+        <div id = message><h2>{{message}}</h2></div>
+        {{secret|safe}}
+        <script>{{decoder|safe}}</script>
+        <div id = broadcast></div>
+    </body>
+</html>

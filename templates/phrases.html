@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Plus Data Insite</title>
+        <style>
+            input, select, textarea, label, button, legend {
+                font-size: 16pt;
+            }
+            h1,h2,h3 {
+                font-size: 250%;
+            }
+        </style>
+        <script src="//code.jquery.com/jquery-1.12.4.min.js"> </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"> </script>
+        <script>
+            $(document).ready(function(){
+                var socket = io();
+                socket.on('connect', function() {
+                    console.log('connected')
+                    socket.emit('new_connection', {data: 'I\'m connected!'});
+                });
+                socket.on('response', function(event){
+                    console.log('response')
+                    $('#response').html('<h3>' + event + '</h3>')
+                })
+                socket.on('broadcast', function(event){
+                    console.log('broadcast')
+                    $('#broadcast').html('<h2>' + event + '</h2>')
+                })
+                function sendCrypto(){
+                    name = localStorage.getItem("name")
+                    socket.emit('crypto_solution', $('#cryptoForm').serialize() + "&name=" + name)
+                    return false //important so the page won't refresh
+                }
+                window.sendCrypto = sendCrypto
+                $('#cryptoForm').submit(function() {
+                    sendCrypto()
+                    return false//important so the page won't refresh
+                });
+            })
+            
+            
+        </script>
+    </head>
+    <body>
+        <h2>1. {{soccer}}</h2>
+        <h2>2. {{russia}}</h2>
+        <h2>3. {{commerce}}</h2>
+        <form id = "cryptoForm">
+            <input id= "cryptoAnswer" type="text" name="cryptoAnswer" value = "answer">
+            <button type= "button" onclick = "sendCrypto()">Submit</button>
+        </form>
+        <div id = response></div>
+        <div id = broadcast></div>
+    </body>
+</html>

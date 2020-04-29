@@ -1,0 +1,175 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Plus Data Insite</title>
+<!--         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> -->
+        <style>
+            input, select, textarea, label, button, legend {
+                font-size: 16pt;
+            }
+            h1,h2,h3 {
+                font-size: 250%;
+            }
+        </style>
+        
+        <script src="//code.jquery.com/jquery-1.12.4.min.js"> </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"> </script>
+        <script>
+            $(document).ready(function(){
+                var socket = io();
+                socket.on('connect', function() {
+                    console.log('connected')
+                    socket.emit('new_connection', {data: 'I\'m connected!'});
+                });
+                socket.on('clue', function(event){
+                    console.log('got clue from server')
+                    $('#clue').html('<h3>' + event + '</h3>')
+                })
+                socket.on('solution', function(event){
+                    console.log('solution')
+                    $('#solution').html('<h3>' + event + '</h3>')
+                })
+                socket.on('broadcast', function(event){
+                    console.log('broadcast')
+                    $('#broadcast').html('<h2>' + event + '</h2>')
+                })
+                if (window.localStorage.getItem("name") !== null){
+                    $("#name").val(localStorage.getItem("name"))
+                }
+                
+                function sendSolution(){
+                    socket.emit(
+                        'logic_solution',
+                        $('#solutionForm').serialize() + "&name=" + $('#name').val())
+                    return false //important so the page won't refresh
+                }
+                function sendName(){
+                    socket.emit('logic_name', $('#nameForm').serialize())
+                    console.log($('#name').val())
+                    window.localStorage.setItem('name', $('#name').val());
+                    return false //important so the page won't refresh
+                }
+                window.sendSolution = sendSolution
+                window.sendName = sendName
+                //reroute submit function on name text field
+                $('#nameForm').submit(function() {
+                    sendName()
+                    return false;
+                });
+            })
+            
+            
+        </script>
+        <style>
+            fieldset {
+                text-align:center;
+                width:49%;
+                box-sizing:border-box;
+                float:left;
+            }
+        </style>
+    </head>
+    <body>
+        <div id = riddle>
+            <h1> 
+                Alice, Bob, Caroline and David are all shopifolk.<br>
+                They each have a Shopify store, and work in a different city.<br>
+                The cities that they work in are Montreal, Ottawa, Toronto, and Waterloo.<br>
+                Their shops specialize in candles, jewellery, soaps, or socks.
+            </h1>
+        </div>
+        <form id = "nameForm">
+             <fieldset>
+                 <legend>Clue</legend>
+                 <label>Name</label>
+                 <input id="name" type="text" name="name" value="First Name">
+                 <button type="button" onclick = "sendName()">Submit</button>
+                 <div id=clue></div>
+            </fieldset>
+        </form>
+        <form id = "solutionForm">
+            <fieldset>
+                <legend>Solutions</legend>
+                <table style="width:100%">
+                  <tr>
+                    <th><label>Alice</label></th>
+                    <th><label>Bob</label></th> 
+                    <th><label>Caroline</label></th>
+                    <th><label>David</label></th>
+                  </tr>
+                  <tr>
+                    <td>
+                        <select name = "alice_shop">
+                            <option value = "candles">Candles</option>
+                            <option value = "jewellery">Jewellery</option>
+                            <option value = "soaps">Soaps</option>
+                            <option value = "socks">Socks</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name = "bob_shop">
+                            <option value = "candles">Candles</option>
+                            <option value = "jewellery">Jewellery</option>
+                            <option value = "soaps">Soaps</option>
+                            <option value = "socks">Socks</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name = "caroline_shop">
+                            <option value = "candles">Candles</option>
+                            <option value = "jewellery">Jewellery</option>
+                            <option value = "soaps">Soaps</option>
+                            <option value = "socks">Socks</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name = "david_shop">
+                            <option value = "candles">Candles</option>
+                            <option value = "jewellery">Jewellery</option>
+                            <option value = "soaps">Soaps</option>
+                            <option value = "socks">Socks</option>
+                        </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                        <select name = "alice_city">
+                            <option value = "montreal">Montreal</option>
+                            <option value = "ottawa">Ottawa</option>
+                            <option value = "toronto">Toronto</option>
+                            <option value = "waterloo">Waterloo</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name = "bob_city">
+                            <option value = "montreal">Montreal</option>
+                            <option value = "ottawa">Ottawa</option>
+                            <option value = "toronto">Toronto</option>
+                            <option value = "waterloo">Waterloo</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name = "caroline_city">
+                            <option value = "montreal">Montreal</option>
+                            <option value = "ottawa">Ottawa</option>
+                            <option value = "toronto">Toronto</option>
+                            <option value = "waterloo">Waterloo</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name= "david_city">
+                            <option value = "montreal">Montreal</option>
+                            <option value = "ottawa">Ottawa</option>
+                            <option value = "toronto">Toronto</option>
+                            <option value = "waterloo">Waterloo</option>
+                        </select>
+                    </td>
+                  </tr>
+                </table>
+                <button type = "button" onclick="sendSolution()">Submit</button>
+            </fieldset>
+        </form>
+        <div id = solution></div>
+        <div id = broadcast></div>
+    </body>
+</html>

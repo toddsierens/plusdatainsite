@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Plus Data Insite</title>
+        <style>
+            input, select, textarea, label, button, legend {
+                font-size: 16pt;
+            }
+            h1,h2,h3 {
+                font-size: 250%;
+            }
+            .left-column {
+                width:50%;
+                position:absolute;
+                left:0px;
+                box-sizing: border-box;
+                border: 1px solid #003000;
+                font-size: 16pt;
+            }
+            .right-column {
+                width:50%;
+                height:600px;
+                position:absolute;
+                right:0px;
+                box-sizing: border-box;
+                border: 1px solid #003000;
+                overflow: scroll;
+                font-size: 16pt;
+            }
+        </style>
+        <script src="//code.jquery.com/jquery-1.12.4.min.js"> </script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"> </script>
+        <script>
+            $(document).ready(function(){
+                var socket = io();
+                socket.on('connect', function() {
+                    console.log('connected')
+                    socket.emit('new_connection', {data: 'I\'m connected!'});
+                });
+                socket.on('logging', function(message){
+                    var today = new Date()
+                    console.log(today)
+                    var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+                    console.log(time)
+                    console.log("received log")
+                    log = $("#logging")
+                    log.prepend(time + " - " + message + "<br>")
+                })
+                function sendBroadcast(){
+                    socket.emit('broadcast', $('#message').val())
+                    return false //important so the page won't refresh
+                }
+                function sendName(){
+                    window.localStorage.setItem('name', $('#name').val());
+                    return false //important so the page won't refresh
+                }
+                window.sendBroadcast = sendBroadcast
+                window.sendName = sendName
+                $('#broadcast').submit(function() {
+                    sendBroadcast()
+                    return false;
+                });
+                $('#nameForm').submit(function() {
+                    sendName()
+                    return false;
+                });
+            })
+            
+        </script>
+
+    </head>
+    <body>
+            
+        <div class="left-column">
+            <form id = broadcast>
+                <fieldset>
+                     <legend>Broadcast</legend>
+                     <label>Message</label>
+                     <input id="message" type="text" name="message" value="">
+                     <button type="button" onclick = "sendBroadcast()">Broadcast</button>
+                </fieldset>
+            </form>
+            <form id = "nameForm">
+                 <fieldset>
+                     <legend>Set Name</legend>
+                     <label>Name</label>
+                     <input id="name" type="text" name="name" value="Admin">
+                     <button type="button" onclick = "sendName()">Submit</button>
+                     <div id=clue></div>
+                </fieldset>
+            </form>
+        </div>
+        <div id=logging class = "right-column"></div>
+    </body>
+</html>
