@@ -416,11 +416,13 @@ def io_disconnect():
         game.players.pop(client_id_map[request.sid], None)
     print('Client disconnected')
     
+
+    
     
 if __name__ == "__main__":
     port = os.environ.get('PORT', 5000)
     print "app is running on port {}".format(port)
     try:
-        socketio.run(app, host = 'localhost', port = port)
+        socketio.run(app, host = '0.0.0.0', port = port)
     finally:
         game.kill()
