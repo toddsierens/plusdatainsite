@@ -323,6 +323,7 @@ def io_logic_name(message):
         "ella":      "Caroline works in Waterloo",
         "hanan":     "Don't believe Karen",
         "joel":      "Don't believe Yilun",
+        "karen":     "Alice sells jewellery",
         "katherine": "Don't believe Ella",
         "khaled":    "Don't believe Asad",
         "mat":       "Don't believe Ali",
